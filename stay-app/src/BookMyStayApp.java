@@ -1,4 +1,4 @@
-// Version 3.1
+// Version 4.1
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +37,7 @@ abstract class Room {
     }
 }
 
-// Concrete Room Types
+// Room Types
 class SingleRoom extends Room {
     public SingleRoom() {
         super(1, 200, 1500);
@@ -68,42 +68,56 @@ class SuiteRoom extends Room {
     }
 }
 
-// Inventory Class (NEW – Core of Use Case 3)
+// Inventory Class (State Holder)
 class RoomInventory {
 
     private HashMap<String, Integer> inventory;
 
-    // Constructor → Initialize inventory
     public RoomInventory() {
         inventory = new HashMap<>();
 
-        // Initial room counts
         inventory.put("Single Room", 5);
-        inventory.put("Double Room", 3);
+        inventory.put("Double Room", 0); // Example: unavailable
         inventory.put("Suite Room", 2);
     }
 
-    // Get availability
+    // Read-only access
     public int getAvailability(String roomType) {
         return inventory.getOrDefault(roomType, 0);
     }
 
-    // Update availability (controlled update)
-    public void updateAvailability(String roomType, int count) {
-        if (inventory.containsKey(roomType)) {
-            inventory.put(roomType, count);
-        } else {
-            System.out.println("Room type not found!");
-        }
-    }
-
-    // Display full inventory
+    // Display (optional)
     public void displayInventory() {
-        System.out.println("=== Current Room Inventory ===");
+        System.out.println("=== Inventory ===");
         for (Map.Entry<String, Integer> entry : inventory.entrySet()) {
-            System.out.println(entry.getKey() + " -> Available: " + entry.getValue());
+            System.out.println(entry.getKey() + " -> " + entry.getValue());
         }
         System.out.println();
+    }
+}
+
+// Search Service (NEW)
+class RoomSearchService {
+
+    private RoomInventory inventory;
+
+    public RoomSearchService(RoomInventory inventory) {
+        this.inventory = inventory;
+    }
+
+    // Read-only search
+    public void searchAvailableRooms(Room[] rooms) {
+        System.out.println("=== Available Rooms ===\n");
+
+        for (Room room : rooms) {
+            int available = inventory.getAvailability(room.getRoomType());
+
+            // Filter unavailable rooms
+            if (available > 0) {
+                room.displayDetails();
+                System.out.println("Available: " + available + "\n");
+            }
+        }
     }
 }
 
@@ -114,37 +128,24 @@ public class BookMyStayApp {
 
         System.out.println("Welcome to the Hotel Booking Management System!");
         System.out.println("Application: Book My Stay App");
-        System.out.println("Version: 3.1\n");
+        System.out.println("Version: 4.1\n");
 
-        // Create Room Objects (Domain)
-        Room single = new SingleRoom();
-        Room doubleRoom = new DoubleRoom();
-        Room suite = new SuiteRoom();
+        // Room Objects (Domain)
+        Room[] rooms = {
+                new SingleRoom(),
+                new DoubleRoom(),
+                new SuiteRoom()
+        };
 
-        // Create Inventory (Centralized State)
+        // Inventory (State)
         RoomInventory inventory = new RoomInventory();
 
-        // Display Room Details
-        System.out.println("=== Room Details ===\n");
-        single.displayDetails();
-        System.out.println();
+        // Search Service (Read-only logic)
+        RoomSearchService searchService = new RoomSearchService(inventory);
 
-        doubleRoom.displayDetails();
-        System.out.println();
+        // Perform Search
+        searchService.searchAvailableRooms(rooms);
 
-        suite.displayDetails();
-        System.out.println();
-
-        // Display Inventory
-        inventory.displayInventory();
-
-        // Example Update
-        System.out.println("Updating Single Room availability to 4...\n");
-        inventory.updateAvailability("Single Room", 4);
-
-        // Display Updated Inventory
-        inventory.displayInventory();
-
-        System.out.println("Application Terminated.");
+        System.out.println("Search Completed. (No data modified)");
     }
 }
